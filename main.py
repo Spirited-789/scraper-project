@@ -1,23 +1,64 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+import requests
+from bs4 import BeautifulSoup
 
 app = FastAPI()
-
-# Tell FastAPI where to find your HTML files
 templates = Jinja2Templates(directory="templates")
 
-# 1. THE HOME PAGE (GET Request)
-# When the user goes to http://127.0.0.1:8000/
+# 1. THE HOME PAGE
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    # This renders the index.html file
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 2. THE ACTION (POST Request)
-# When the user clicks "Scrape Now", the form sends data here
-@app.post("/scrape")
-async def handle_scrape(my_url: str = Form(...)):
-    # logic will go here later.
-    # For now, let's just prove it worked by returning the URL.
-    return {"message": "You entered this URL:", "received_url": my_url}
+# 2. THE SCRAPING ACTION
+@app.post("/scrape", response_class=HTMLResponse)
+async def handle_scrape(request: Request, my_url: str = Form(...)):
+    
+    # --- A. CONNECT TO THE WEBSITE ---
+    # We use a "User-Agent" so websites think we are a real browser, not a bot
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    
+    try:
+        # Check if user added http:// or https://
+        if not my_url.startswith(('http://', 'https://')):
+            my_url = 'https://' + my_url
+            
+        page = requests.get(my_url, headers=headers)
+        soup = BeautifulSoup(page.content, "html.parser")
+
+        # --- B. EXTRACT DATA ---
+        
+        # 1. Get the Title
+        page_title = soup.title.string if soup.title else "No Title Found"
+        
+        # 2. Get the Meta Description (Standard SEO tag)
+        meta_desc = "No description found"
+        description_tag = soup.find("meta", attrs={"name": "description"})
+        if description_tag:
+            meta_desc = description_tag.get("content")
+
+        # 3. Get Word Count (Remove HTML tags, split text into list, count list)
+        text_content = soup.get_text()
+        words = text_content.split()
+        word_count = len(words)
+
+    except Exception as e:
+        # If something breaks (e.g., bad URL), show a simple error
+        return templates.TemplateResponse("index.html", {
+            "request": request, 
+            "error_message": f"Error scraping URL: {str(e)}"
+        })
+
+    # --- C. RENDER THE REPORT ---
+    # We pass the data we found to 'report.html'
+    return templates.TemplateResponse("report.html", {
+        "request": request,
+        "url": my_url,
+        "title": page_title,
+        "meta_desc": meta_desc,
+        "word_count": word_count
+    })
