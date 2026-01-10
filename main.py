@@ -1,64 +1,98 @@
+import sqlite3
+import requests
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-import requests
-from bs4 import BeautifulSoup
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# 1. THE HOME PAGE
+# --- DATABASE SETUP ---
+def init_db():
+    """Creates the database table if it doesn't exist."""
+    conn = sqlite3.connect('scraper_data.db')
+    c = conn.cursor()
+    # We create a table to match the fields in your image
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            price REAL,
+            category TEXT,
+            description TEXT,
+            rating REAL,
+            image_url TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Run the DB setup once when the app starts
+init_db()
+
+# --- ROUTES ---
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-# 2. THE SCRAPING ACTION
-@app.post("/scrape", response_class=HTMLResponse)
-async def handle_scrape(request: Request, my_url: str = Form(...)):
+@app.post("/scrape")
+async def handle_scrape(my_url: str = Form(...)):
     
-    # --- A. CONNECT TO THE WEBSITE ---
-    # We use a "User-Agent" so websites think we are a real browser, not a bot
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    
+    # 1. Fetch the Data
     try:
-        # Check if user added http:// or https://
-        if not my_url.startswith(('http://', 'https://')):
-            my_url = 'https://' + my_url
+        response = requests.get(my_url)
+        response.raise_for_status() # Check for errors
+        
+        # 2. Check if it is JSON (like the link you sent)
+        content_type = response.headers.get('Content-Type', '')
+        
+        if 'application/json' in content_type:
+            data = response.json()
+            # Extract data based on the structure in your image
+            title = data.get('title', 'No Title')
+            price = data.get('price', 0.0)
+            category = data.get('category', 'Unknown')
+            desc = data.get('description', '')
+            img = data.get('image', '')
+            # Rating is nested inside a dictionary: "rating": {"rate": 3.9 ...}
+            rating = data.get('rating', {}).get('rate', 0.0)
             
-        page = requests.get(my_url, headers=headers)
-        soup = BeautifulSoup(page.content, "html.parser")
+        else:
+            # Fallback for normal websites (your old logic)
+            # For this step, let's focus on the JSON part you asked for.
+            return {"Error": "This specific code is currently optimized for API/JSON links like FakeStoreAPI."}
 
-        # --- B. EXTRACT DATA ---
+        # 3. Save to Database
+        conn = sqlite3.connect('scraper_data.db')
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO products (title, price, category, description, rating, image_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (title, price, category, desc, rating, img))
         
-        # 1. Get the Title
-        page_title = soup.title.string if soup.title else "No Title Found"
-        
-        # 2. Get the Meta Description (Standard SEO tag)
-        meta_desc = "No description found"
-        description_tag = soup.find("meta", attrs={"name": "description"})
-        if description_tag:
-            meta_desc = description_tag.get("content")
+        new_id = c.lastrowid # Get the ID of the row we just created
+        conn.commit()
+        conn.close()
 
-        # 3. Get Word Count (Remove HTML tags, split text into list, count list)
-        text_content = soup.get_text()
-        words = text_content.split()
-        word_count = len(words)
+        # 4. Redirect to the Report Page for THIS item
+        return RedirectResponse(url=f"/report/{new_id}", status_code=303)
 
     except Exception as e:
-        # If something breaks (e.g., bad URL), show a simple error
-        return templates.TemplateResponse("index.html", {
-            "request": request, 
-            "error_message": f"Error scraping URL: {str(e)}"
-        })
+        return {"error": str(e)}
 
-    # --- C. RENDER THE REPORT ---
-    # We pass the data we found to 'report.html'
-    return templates.TemplateResponse("report.html", {
-        "request": request,
-        "url": my_url,
-        "title": page_title,
-        "meta_desc": meta_desc,
-        "word_count": word_count
-    })
+@app.get("/report/{product_id}", response_class=HTMLResponse)
+async def show_report(request: Request, product_id: int):
+    # 1. Fetch data from Database
+    conn = sqlite3.connect('scraper_data.db')
+    conn.row_factory = sqlite3.Row # Allows accessing columns by name
+    c = conn.cursor()
+    c.execute("SELECT * FROM products WHERE id = ?", (product_id,))
+    product = c.fetchone()
+    conn.close()
+
+    if product:
+        # Pass the database row to the HTML template
+        return templates.TemplateResponse("report.html", {"request": request, "p": product})
+    else:
+        return {"error": "Product not found"}

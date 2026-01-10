@@ -1,33 +1,110 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Scraping Report</title>
+    <meta charset="UTF-8">
+    <title>Product Report</title>
+
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .stat-box { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-        h1 { color: #333; }
-        a { color: #0066cc; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            background: #f4f4f9;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .price-tag {
+            font-size: 2em;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .category {
+            background: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Rating Bar */
+        .rating-bar-container {
+            width: 100%;
+            background: #eee;
+            height: 20px;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .rating-bar-fill {
+            height: 100%;
+            background: #f1c40f;
+            width: var(--rating-width, 0%);
+            transition: width 1s ease;
+        }
+
+        .product-image {
+            max-width: 200px;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #555;
+        }
     </style>
 </head>
+
 <body>
-    <h1>Scrape Report</h1>
-    <p>Target: <a href="{{ url }}" target="_blank">{{ url }}</a></p>
 
-    <div class="stat-box">
-        <h3>Page Title</h3>
-        <p><strong>{{ title }}</strong></p>
+    <div class="card">
+        <div class="header">
+            <div>
+                <span class="category">{{ p.category }}</span>
+                <h1>{{ p.title }}</h1>
+            </div>
+            <div class="price-tag">${{ p.price }}</div>
+        </div>
+
+        {% if p.image_url %}
+            <img src="{{ p.image_url }}" class="product-image" alt="Product Image">
+        {% endif %}
+
+        <p>{{ p.description }}</p>
+
+        <hr>
+
+        <h3>Customer Rating: {{ p.rating }} / 5.0</h3>
+
+        <div class="rating-bar-container">
+            <div
+                class="rating-bar-fill"
+                style="--rating-width: {{ (p.rating * 20) | int }}%;">
+            </div>
+        </div>
     </div>
 
-    <div class="stat-box">
-        <h3>Word Count</h3>
-        <p>Found <strong>{{ word_count }}</strong> words on the page.</p>
-    </div>
+    <a href="/" class="back-btn">← Scan Another Product</a>
 
-    <div class="stat-box">
-        <h3>Meta Description</h3>
-        <p><em>{{ meta_desc }}</em></p>
-    </div>
-    
-    <a href="/">Go Back</a>
 </body>
 </html>
