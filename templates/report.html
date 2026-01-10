@@ -2,22 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Product Report</title>
+    <title>Product Dashboard</title>
 
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
+            max-width: 1000px;
+            margin: 20px auto;
             background: #f4f4f9;
             padding: 20px;
         }
 
+        /* Detail Card */
         .card {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            border-left: 5px solid #2ecc71;
         }
 
         .header {
@@ -34,16 +37,6 @@
             font-weight: bold;
         }
 
-        .category {
-            background: #e0e0e0;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Rating Bar */
         .rating-bar-container {
             width: 100%;
             background: #eee;
@@ -61,50 +54,120 @@
         }
 
         .product-image {
-            max-width: 200px;
+            max-width: 150px;
             display: block;
-            margin: 20px auto;
+            margin: 20px 0;
         }
 
-        .back-btn {
-            display: inline-block;
-            margin-top: 20px;
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .btn-view {
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
             text-decoration: none;
-            color: #555;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
     </style>
 </head>
 
 <body>
 
+    {% if focused_product %}
     <div class="card">
         <div class="header">
             <div>
-                <span class="category">{{ p.category }}</span>
-                <h1>{{ p.title }}</h1>
+                <small style="color: #888; text-transform: uppercase;">LATEST REPORT</small>
+                <h1>{{ focused_product.title }}</h1>
+                <span style="background: #e0e0e0; padding: 4px 8px; border-radius: 4px; font-size: 0.8em;">
+                    {{ focused_product.category }}
+                </span>
             </div>
-            <div class="price-tag">${{ p.price }}</div>
+            <div class="price-tag">${{ focused_product.price }}</div>
         </div>
 
-        {% if p.image_url %}
-            <img src="{{ p.image_url }}" class="product-image" alt="Product Image">
-        {% endif %}
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+            {% if focused_product.image_url %}
+                <img src="{{ focused_product.image_url }}" class="product-image">
+            {% endif %}
 
-        <p>{{ p.description }}</p>
+            <div style="flex-grow: 1;">
+                <p>{{ focused_product.description }}</p>
 
-        <hr>
+                <h3>Rating: {{ focused_product.rating }} / 5.0</h3>
 
-        <h3>Customer Rating: {{ p.rating }} / 5.0</h3>
-
-        <div class="rating-bar-container">
-            <div
-                class="rating-bar-fill"
-                style="--rating-width: {{ (p.rating * 20) | int }}%;">
+                <div class="rating-bar-container">
+                    <div
+                        class="rating-bar-fill"
+                        style="--rating-width: {{ rating_pct }}%;">
+                    </div>
+                </div>
             </div>
         </div>
+
+        <br>
+        <a href="/report" style="color: #666;">× Close Details</a>
+    </div>
+    {% endif %}
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h2>All Scanned Products</h2>
+        <a href="/" style="background: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            + Scan New URL
+        </a>
     </div>
 
-    <a href="/" class="back-btn">← Scan Another Product</a>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Rating</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in all_products %}
+            <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.title }}</td>
+                <td>{{ p.category }}</td>
+                <td>${{ p.price }}</td>
+                <td>{{ p.rating }}</td>
+                <td>
+                    <a href="/report?id={{ p.id }}" class="btn-view">View Graph</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
 </body>
 </html>
