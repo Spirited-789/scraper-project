@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scraping Report</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .stat-box { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        h1 { color: #333; }
+        a { color: #0066cc; }
+    </style>
+</head>
+<body>
+    <h1>Scrape Report</h1>
+    <p>Target: <a href="{{ url }}" target="_blank">{{ url }}</a></p>
+
+    <div class="stat-box">
+        <h3>Page Title</h3>
+        <p><strong>{{ title }}</strong></p>
+    </div>
+
+    <div class="stat-box">
+        <h3>Word Count</h3>
+        <p>Found <strong>{{ word_count }}</strong> words on the page.</p>
+    </div>
+
+    <div class="stat-box">
+        <h3>Meta Description</h3>
+        <p><em>{{ meta_desc }}</em></p>
+    </div>
+    
+    <a href="/">Go Back</a>
+</body>
+</html>
