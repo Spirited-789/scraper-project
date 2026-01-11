@@ -34,17 +34,27 @@ function Home() {
 
   return (
     <div className="max-w-screen h-screen bg-black flex items-center justify-center">
-      <div className="grid grid-cols-2 ">
-        <div className=" m-l-10 h-50% w-50% bg-slate-200 p-40 rounded-md">
-          <h1>SEO Scraper (React Version)</h1>
+      <div className="grid grid-cols-2 mx-auto pr-10">
+        <div className=" h-50% w-50% bg-black pl-0 p-40 rounded-md">
+          <h1 className="font-mono ... text-white text-7xl font-bold size-xl p-10 gap-1 ">
+            SEO Scraper
+          </h1>
+          <span className="font-mono ... pl-10 text-[#a3a3a3]  text-xl">
+            Scrape away APIs and make reports seamlessly!
+          </span>
           <Input
+            className="text-[#a3a3a3]"
             type="text"
             placeholder="Enter JSON URL..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
 
-          <Button onClick={handleScrape} disabled={loading}>
+          <Button
+            className="bg-[#9bff00] hover:bg-[#76c100] hover:cursor-pointer text-[#2b3703]"
+            onClick={handleScrape}
+            disabled={loading}
+          >
             {loading ? "Scraping..." : "Scrape Now"}
           </Button>
           <br />
@@ -52,18 +62,18 @@ function Home() {
           <Link to="/dashboard">View History</Link>
         </div>
         {/* <div className="bg-red-500 border rounded-md ">gf</div> */}
-        <div className="group relative  overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-900 to-black">
-          {/* background grid */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:28px_28px]" />
+        <div className="rounded-md  group relative h-full w-full overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-900 to-black">
+          {/* subtle analytics grid */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
 
-          {/* animated wave */}
+          {/* FULL HEIGHT WAVE */}
           <svg
-            viewBox="0 0 1440 320"
-            className="absolute bottom-0 w-[200%] h-[65%] transition-transform duration-1000 ease-out group-hover:translate-x-[-10%]"
+            viewBox="0 0 1440 600"
             preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-[180%] transition-transform duration-1000 ease-out group-hover:translate-x-[-8%]"
           >
             <defs>
-              <linearGradient id="waveGradient" x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0%" stopColor="#22d3ee" />
                 <stop offset="50%" stopColor="#34d399" />
                 <stop offset="100%" stopColor="#60a5fa" />
@@ -71,27 +81,27 @@ function Home() {
             </defs>
 
             <path
-              fill="url(#waveGradient)"
-              fillOpacity="0.9"
-              d="M0,160L40,165C80,170,160,180,240,170C320,160,400,130,480,120C560,110,640,120,720,135C800,150,880,170,960,165C1040,160,1120,130,1200,115C1280,100,1360,95,1400,95L1440,96L1440,320L1400,320L1360,320L1280,320L1200,320L1120,320L1040,320L960,320L880,320L800,320L720,320L640,320L560,320L480,320L400,320L320,320L240,320L160,320L80,320L0,320Z"
+              d="M0,300 C120,220 240,380 360,300 C480,220 600,380 720,300 C840,220 960,380 1080,300 C1200,220 1320,380 1440,300 L1440,600 L0,600 Z"
+              fill="url(#waveGrad)"
+              opacity="0.9"
             />
           </svg>
 
-          {/* glow highlight */}
+          {/* soft glow */}
           <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100">
-            <div className="absolute -inset-24 bg-cyan-400/25 blur-3xl" />
+            <div className="absolute -inset-32 bg-cyan-400/30 blur-3xl" />
           </div>
 
-          {/* foreground signal bars */}
-          <div className="relative z-10 flex h-full items-end justify-center gap-2 px-6 pb-6">
-            {[45, 75, 60, 90, 70, 85, 65].map((h, i) => (
+          {/* overlay signal bars (mid-height, not bottom) */}
+          <div className="relative z-10 flex h-full items-center justify-center gap-3 px-6">
+            {[55, 80, 65, 95, 75, 88].map((h, i) => (
               <span
                 key={i}
                 className="
           block w-2.5 rounded-full
           bg-gradient-to-t from-cyan-400 to-emerald-300
           origin-bottom
-          scale-y-50
+          scale-y-60
           transition-transform duration-700 ease-out
           group-hover:scale-y-100
         "
