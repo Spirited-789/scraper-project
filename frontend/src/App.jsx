@@ -7,12 +7,12 @@ import {
   Link,
   useNavigate,
 } from "react-router-dom";
-import "./App.css"; // You can keep default styles or add your own
+import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import RightAnalyticsDiv from "./mymade_components/RightAnalyticsDiv";
 
-// --- PAGE 1: HOME (Input Form) ---
+/* ---------------- HOME ---------------- */
 function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,11 +21,7 @@ function Home() {
   const handleScrape = async () => {
     setLoading(true);
     try {
-      // We send a JSON POST request to your Python backend
-      const res = await axios.post("http://localhost:8000/scrape", { url });
-
-      // If successful, navigate to the dashboard
-      // You can decide logic here: if res.data.count > 1 go to history, else go to report
+      await axios.post("http://localhost:8000/scrape", { url });
       navigate("/dashboard");
     } catch (error) {
       alert("Error scraping: " + error.message);
@@ -34,48 +30,62 @@ function Home() {
   };
 
   return (
-    <div className="max-w-screen h-screen bg-black flex items-center justify-center">
-      <div className="grid grid-cols-2 mx-auto pr-10">
-        <div className=" h-50% w-50% bg-black pl-0 p-40 rounded-md">
-          <h1 className="font-mono ... text-white text-7xl font-bold size-xl p-10 gap-1 ">
-            SEO Scraper
-          </h1>
-          <span className="font-mono ... pl-10 text-[#a3a3a3]  text-xl">
-            Scrape away APIs and make reports seamlessly!
-          </span>
-          <Input
-            className="text-[#a3a3a3]"
-            type="text"
-            placeholder="Enter JSON URL..."
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="w-full max-w-7xl px-6 lg:px-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-16">
+          {/* LEFT */}
+          <div className="flex flex-col gap-8">
+            <div>
+              <h1 className="font-mono text-white text-5xl lg:text-7xl font-bold">
+                SEO Scraper
+              </h1>
 
-          <Button
-            className="bg-[#9bff00] hover:bg-[#76c100] hover:cursor-pointer text-[#2b3703]"
-            onClick={handleScrape}
-            disabled={loading}
-          >
-            {loading ? "Scraping..." : "Scrape Now"}
-          </Button>
-          <br />
-          <br />
-          <Link to="/dashboard">View History</Link>
-        </div>
-        <div className=" rounded-md ">
-          <RightAnalyticsDiv />
+              <p className="font-mono text-[#a3a3a3] text-lg lg:text-xl mt-4">
+                Scrape away APIs and make reports seamlessly!
+              </p>
+            </div>
+
+            {/* INPUT + BUTTON ROW */}
+            <div className="flex items-center gap-3 max-w-lg">
+              <Input
+                className="text-[#a3a3a3] flex-1"
+                type="text"
+                placeholder="Enter JSON URL..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+
+              <Button
+                className="
+                  bg-[#9bff00]
+                  hover:bg-[#76c100]
+                  text-[#2b3703]
+                  px-5 py-2
+                  h-10
+                "
+                onClick={handleScrape}
+                disabled={loading}
+              >
+                {loading ? "Scraping..." : "Scrape"}
+              </Button>
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="w-full h-[420px] lg:h-[520px]">
+            <RightAnalyticsDiv />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// --- PAGE 2: DASHBOARD (Report + History combined) ---
+/* ---------------- DASHBOARD ---------------- */
 function Dashboard() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    // Fetch data from Python when page loads
     axios
       .get("http://localhost:8000/products")
       .then((res) => setProducts(res.data))
@@ -83,25 +93,24 @@ function Dashboard() {
   }, []);
 
   return (
-    <div className="container">
-      <h2>Product History</h2>
-      <Link to="/">← Back to Home</Link>
+    <div className="min-h-screen bg-black text-white px-6 lg:px-10 py-10">
+      <h2 className="text-3xl font-bold mb-4">Product History</h2>
+      <Link to="/" className="text-[#9bff00] underline">
+        ← Back to Home
+      </Link>
 
-      <div className="grid">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
         {products.map((p) => (
-          <div key={p.id} className="card">
+          <div key={p.id} className="bg-[#111] p-5 rounded-lg">
             <img src={p.image_url} width="100" alt={p.title} />
-            <h3>{p.title}</h3>
-            <p className="price">${p.price}</p>
-            {/* The rating math happens here in JS now! */}
-            <div className="rating-bar">
+            <h3 className="mt-3 font-semibold">{p.title}</h3>
+            <p className="text-[#9bff00]">${p.price}</p>
+
+            <div className="h-2 bg-gray-700 mt-3 rounded">
               <div
-                style={{
-                  width: `${(p.rating / 5) * 100}%`,
-                  background: "gold",
-                  height: "10px",
-                }}
-              ></div>
+                className="h-full bg-[#9bff00] rounded"
+                style={{ width: `${(p.rating / 5) * 100}%` }}
+              />
             </div>
           </div>
         ))}
@@ -110,8 +119,8 @@ function Dashboard() {
   );
 }
 
-// --- MAIN APP COMPONENT ---
-function App() {
+/* ---------------- APP ---------------- */
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
@@ -121,5 +130,3 @@ function App() {
     </BrowserRouter>
   );
 }
-
-export default App;
