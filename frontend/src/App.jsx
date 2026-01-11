@@ -8,6 +8,8 @@ import {
   useNavigate,
 } from "react-router-dom";
 import "./App.css"; // You can keep default styles or add your own
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
 
 // --- PAGE 1: HOME (Input Form) ---
 function Home() {
@@ -31,20 +33,26 @@ function Home() {
   };
 
   return (
-    <div className="container">
-      <h1>SEO Scraper (React Version)</h1>
-      <input
-        type="text"
-        placeholder="Enter JSON URL..."
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-      />
-      <button onClick={handleScrape} disabled={loading}>
-        {loading ? "Scraping..." : "Scrape Now"}
-      </button>
-      <br />
-      <br />
-      <Link to="/dashboard">View History</Link>
+    <div className="max-w-screen h-screen bg-black flex items-center justify-center">
+      <div className="grid grid-cols-2 ">
+        <div className=" m-l-10 h-50% w-50% bg-slate-200 p-40 rounded-md">
+          <h1>SEO Scraper (React Version)</h1>
+          <Input
+            type="text"
+            placeholder="Enter JSON URL..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+
+          <Button onClick={handleScrape} disabled={loading}>
+            {loading ? "Scraping..." : "Scrape Now"}
+          </Button>
+          <br />
+          <br />
+          <Link to="/dashboard">View History</Link>
+        </div>
+        <div className="bg-red-500 border rounded-md ">gf</div>
+      </div>
     </div>
   );
 }
