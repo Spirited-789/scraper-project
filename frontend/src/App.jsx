@@ -51,7 +51,55 @@ function Home() {
           <br />
           <Link to="/dashboard">View History</Link>
         </div>
-        <div className="bg-red-500 border rounded-md ">gf</div>
+        {/* <div className="bg-red-500 border rounded-md ">gf</div> */}
+        <div className="group relative  overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-900 to-black">
+          {/* background grid */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:28px_28px]" />
+
+          {/* animated wave */}
+          <svg
+            viewBox="0 0 1440 320"
+            className="absolute bottom-0 w-[200%] h-[65%] transition-transform duration-1000 ease-out group-hover:translate-x-[-10%]"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient id="waveGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#22d3ee" />
+                <stop offset="50%" stopColor="#34d399" />
+                <stop offset="100%" stopColor="#60a5fa" />
+              </linearGradient>
+            </defs>
+
+            <path
+              fill="url(#waveGradient)"
+              fillOpacity="0.9"
+              d="M0,160L40,165C80,170,160,180,240,170C320,160,400,130,480,120C560,110,640,120,720,135C800,150,880,170,960,165C1040,160,1120,130,1200,115C1280,100,1360,95,1400,95L1440,96L1440,320L1400,320L1360,320L1280,320L1200,320L1120,320L1040,320L960,320L880,320L800,320L720,320L640,320L560,320L480,320L400,320L320,320L240,320L160,320L80,320L0,320Z"
+            />
+          </svg>
+
+          {/* glow highlight */}
+          <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100">
+            <div className="absolute -inset-24 bg-cyan-400/25 blur-3xl" />
+          </div>
+
+          {/* foreground signal bars */}
+          <div className="relative z-10 flex h-full items-end justify-center gap-2 px-6 pb-6">
+            {[45, 75, 60, 90, 70, 85, 65].map((h, i) => (
+              <span
+                key={i}
+                className="
+          block w-2.5 rounded-full
+          bg-gradient-to-t from-cyan-400 to-emerald-300
+          origin-bottom
+          scale-y-50
+          transition-transform duration-700 ease-out
+          group-hover:scale-y-100
+        "
+                style={{ height: `${h}px` }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
