@@ -36,6 +36,13 @@ st.markdown("""
         background-color: #0b0b0b;
         border-right: 1px solid #1f1f1f;
     }
+
+    .insight {
+        color: #a3a3a3;
+        font-size: 14px;
+        margin-top: 6px;
+        line-height: 1.5;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,25 +103,10 @@ st.markdown("## 📌 Market Overview")
 
 c1, c2, c3, c4 = st.columns(4)
 
-c1.metric(
-    "Total Market Cap",
-    format_big_number(df["market_cap"].sum())
-)
-
-c2.metric(
-    "Average Price",
-    f"${df['current_price'].mean():,.2f}"
-)
-
-c3.metric(
-    "Top Asset",
-    df.iloc[0]["name"]
-)
-
-c4.metric(
-    "Avg 24h Change",
-    f"{df['price_change_pct_24h'].mean():.2f}%"
-)
+c1.metric("Total Market Cap", format_big_number(df["market_cap"].sum()))
+c2.metric("Average Price", f"${df['current_price'].mean():,.2f}")
+c3.metric("Top Asset", df.iloc[0]["name"])
+c4.metric("Avg 24h Change", f"{df['price_change_pct_24h'].mean():.2f}%")
 
 st.divider()
 
@@ -138,6 +130,39 @@ price_fig.update_layout(
 
 st.plotly_chart(price_fig, use_container_width=True)
 
+st.markdown("""
+<div class="insight">
+• Shows relative 24-hour price momentum across top assets.<br>
+• Extreme movers often indicate short-term trading opportunities or news impact.
+</div>
+""", unsafe_allow_html=True)
+
+# ================= PIE CHART =================
+st.markdown("## 🧩 Metric Share (Top Assets)")
+
+pie_fig = px.pie(
+    df_top,
+    names="name",
+    values=metric,
+    hole=0.5,
+    color_discrete_sequence=px.colors.sequential.Greens
+)
+
+pie_fig.update_layout(
+    plot_bgcolor="#000000",
+    paper_bgcolor="#000000",
+    font_color="white",
+)
+
+st.plotly_chart(pie_fig, use_container_width=True)
+
+st.markdown("""
+<div class="insight">
+• Represents how the selected metric is distributed among leading assets.<br>
+• Higher concentration suggests market dominance by fewer large players.
+</div>
+""", unsafe_allow_html=True)
+
 # ================= MARKET CAP =================
 st.markdown("## 💰 Market Cap Distribution")
 
@@ -156,6 +181,13 @@ cap_fig.update_layout(
 )
 
 st.plotly_chart(cap_fig, use_container_width=True)
+
+st.markdown("""
+<div class="insight">
+• Visualizes relative market size and capital concentration.<br>
+• Larger blocks indicate assets with systemic influence on the market.
+</div>
+""", unsafe_allow_html=True)
 
 # ================= VOLATILITY =================
 st.markdown("## ⚠️ Intraday Volatility")
@@ -177,6 +209,13 @@ vol_fig.update_layout(
 )
 
 st.plotly_chart(vol_fig, use_container_width=True)
+
+st.markdown("""
+<div class="insight">
+• Measures intraday price range as a proxy for short-term risk.<br>
+• Assets with high volatility attract speculative and arbitrage activity.
+</div>
+""", unsafe_allow_html=True)
 
 # ================= RAW DATA =================
 if show_raw:

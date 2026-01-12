@@ -37,7 +37,7 @@ function Home() {
           <div className="flex flex-col gap-8">
             <div>
               <h1 className="font-mono text-white text-5xl lg:text-7xl font-bold">
-                Market Data Ingestor
+                Data Drive
               </h1>
 
               <p className="font-mono text-[#a3a3a3] text-lg lg:text-xl mt-4">
@@ -50,7 +50,7 @@ function Home() {
               <Input
                 className="text-[#a3a3a3] flex-1"
                 type="text"
-                placeholder="Paste CoinGecko API URL..."
+                placeholder="Paste URL..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
@@ -66,7 +66,7 @@ function Home() {
                 onClick={handleIngest}
                 disabled={loading}
               >
-                {loading ? "Ingesting..." : "Ingest"}
+                {loading ? "Ingesting..." : "Go!"}
               </Button>
             </div>
           </div>
