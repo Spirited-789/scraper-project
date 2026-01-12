@@ -5,11 +5,13 @@ import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import RightAnalyticsDiv from "./mymade_components/RightAnalyticsDiv";
+import PageSkeleton from "./mymade_components/PageSkeleton";
 
 /* ================= HOME ================= */
 function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
 
   const handleIngest = async () => {
     if (!url) {
@@ -17,18 +19,22 @@ function Home() {
       return;
     }
 
+    setPageLoading(true); // <-- SHOW SKELETON
     setLoading(true);
+
     try {
       await axios.post("http://localhost:8000/ingest", { url });
-
-      // 🔥 DIRECTLY OPEN STREAMLIT DASHBOARD
       window.open("http://localhost:8501", "_blank");
     } catch (error) {
       alert("Error ingesting data");
+    } finally {
+      setLoading(false);
+      setPageLoading(false); // <-- HIDE SKELETON
     }
-    setLoading(false);
   };
-
+  if (pageLoading) {
+    return <PageSkeleton />;
+  }
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="w-full max-w-7xl px-6 lg:px-10">
