@@ -1,17 +1,17 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
+import requests
 import plotly.express as px
 
-DB_NAME = "market_data.db"
+# ================= CONFIG =================
+API_BASE_URL = "https://data-drive-d7kc.onrender.com"  # change later if needed
 
-# ================= PAGE CONFIG =================
 st.set_page_config(
     page_title="Market Analytics",
     layout="wide",
 )
 
-# ================= THEME (MATCH HOMEPAGE) =================
+# ================= THEME =================
 st.markdown("""
 <style>
     .stApp {
@@ -56,19 +56,18 @@ def format_big_number(num):
         return f"${num/1e6:.2f}M"
     return f"${num:,.0f}"
 
-# ================= LOAD DATA =================
-@st.cache_data
+# ================= LOAD DATA (FROM FASTAPI) =================
+@st.cache_data(ttl=60)
 def load_latest():
-    conn = sqlite3.connect(DB_NAME)
-    df = pd.read_sql("""
-        SELECT *
-        FROM market_snapshots
-        WHERE timestamp = (SELECT MAX(timestamp) FROM market_snapshots)
-    """, conn)
-    conn.close()
-    return df
+    r = requests.get(f"{API_BASE_URL}/report/latest?limit=50", timeout=10)
+    r.raise_for_status()
+    return pd.DataFrame(r.json())
 
-df = load_latest()
+try:
+    df = load_latest()
+except Exception as e:
+    st.error("Failed to load data from API")
+    st.stop()
 
 if df.empty:
     st.warning("No data available. Ingest data first.")
@@ -132,8 +131,8 @@ st.plotly_chart(price_fig, use_container_width=True)
 
 st.markdown("""
 <div class="insight">
-• Shows relative 24-hour price momentum across top assets.<br>
-• Extreme movers often indicate short-term trading opportunities or news impact.
+• Compares short-term momentum across leading assets.<br>
+• Extreme movers often reflect breaking news or liquidity shifts.
 </div>
 """, unsafe_allow_html=True)
 
@@ -158,8 +157,8 @@ st.plotly_chart(pie_fig, use_container_width=True)
 
 st.markdown("""
 <div class="insight">
-• Represents how the selected metric is distributed among leading assets.<br>
-• Higher concentration suggests market dominance by fewer large players.
+• Shows how the selected metric is distributed across top assets.<br>
+• Higher concentration suggests dominance by fewer market leaders.
 </div>
 """, unsafe_allow_html=True)
 
@@ -184,8 +183,8 @@ st.plotly_chart(cap_fig, use_container_width=True)
 
 st.markdown("""
 <div class="insight">
-• Visualizes relative market size and capital concentration.<br>
-• Larger blocks indicate assets with systemic influence on the market.
+• Visualizes capital concentration across assets.<br>
+• Larger blocks indicate systemic market influence.
 </div>
 """, unsafe_allow_html=True)
 
@@ -212,8 +211,8 @@ st.plotly_chart(vol_fig, use_container_width=True)
 
 st.markdown("""
 <div class="insight">
-• Measures intraday price range as a proxy for short-term risk.<br>
-• Assets with high volatility attract speculative and arbitrage activity.
+• Volatility reflects intraday risk and trading intensity.<br>
+• High values often attract speculative and arbitrage activity.
 </div>
 """, unsafe_allow_html=True)
 
