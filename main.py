@@ -108,6 +108,12 @@ def ingest_market_data(request: IngestRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+@app.get("/")
+def root():
+    return {"status": "FastAPI backend running"}
+
+
 # ---------------- LATEST SNAPSHOT ----------------
 @app.get("/report/latest")
 def latest_snapshot(limit: int = 50):
