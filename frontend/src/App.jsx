@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
+
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import RightAnalyticsDiv from "./mymade_components/RightAnalyticsDiv";
@@ -19,22 +20,34 @@ function Home() {
       return;
     }
 
-    setPageLoading(true); // <-- SHOW SKELETON
+    setPageLoading(true);
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:8000/ingest", { url });
+      // 🔹 ONLY backend ingestion here
+      await axios.post("https://data-drive-d7kc.onrender.com/ingest", { url });
+
+      // 🔹 Success feedback
+      alert("Data ingested successfully");
+
+      // 🔹 Open Streamlit dashboard (local for now)
       window.open("http://localhost:8501", "_blank");
     } catch (error) {
-      alert("Error ingesting data");
+      console.error(error);
+      alert(
+        error?.response?.data?.detail || "Backend error while ingesting data"
+      );
     } finally {
       setLoading(false);
-      setPageLoading(false); // <-- HIDE SKELETON
+      setPageLoading(false);
     }
   };
+
+  // 🔹 FULL PAGE SKELETON
   if (pageLoading) {
     return <PageSkeleton />;
   }
+
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="w-full max-w-7xl px-6 lg:px-10">
@@ -56,7 +69,7 @@ function Home() {
               <Input
                 className="text-[#a3a3a3] flex-1"
                 type="text"
-                placeholder="Paste URL..."
+                placeholder="Paste API URL..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
