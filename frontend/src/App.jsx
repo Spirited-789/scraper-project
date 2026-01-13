@@ -24,14 +24,14 @@ function Home() {
     setLoading(true);
 
     try {
-      // 🔹 ONLY backend ingestion here
+      // 🔹 Backend ingestion (Render)
       await axios.post("https://data-drive-d7kc.onrender.com/ingest", { url });
 
-      // 🔹 Success feedback
-      alert("Data ingested successfully");
-
-      // 🔹 Open Streamlit dashboard (local for now)
-      window.open("http://localhost:8501", "_blank");
+      // 🔹 Open deployed Streamlit dashboard
+      window.open(
+        "https://scraper-project-data07drive.streamlit.app/",
+        "_blank"
+      );
     } catch (error) {
       console.error(error);
       alert(
@@ -43,7 +43,7 @@ function Home() {
     }
   };
 
-  // 🔹 FULL PAGE SKELETON
+  // 🔹 Full-page skeleton while ingesting
   if (pageLoading) {
     return <PageSkeleton />;
   }

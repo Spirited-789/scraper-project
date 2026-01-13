@@ -4,7 +4,7 @@ import requests
 import plotly.express as px
 
 # ================= CONFIG =================
-API_BASE_URL = "https://data-drive-d7kc.onrender.com"  # change later if needed
+API_BASE_URL = "https://data-drive-d7kc.onrender.com"
 
 st.set_page_config(
     page_title="Market Analytics",
@@ -18,25 +18,20 @@ st.markdown("""
         background-color: #000000;
         color: white;
     }
-
     h1, h2, h3 {
         color: #9bff00;
     }
-
     .stMetricValue {
         color: #9bff00;
         font-size: 28px;
     }
-
     .stMetricLabel {
         color: #a3a3a3;
     }
-
     section[data-testid="stSidebar"] {
         background-color: #0b0b0b;
         border-right: 1px solid #1f1f1f;
     }
-
     .insight {
         color: #a3a3a3;
         font-size: 14px;
@@ -48,6 +43,11 @@ st.markdown("""
 
 # ================= UTILS =================
 def format_big_number(num):
+    try:
+        num = float(num)
+    except Exception:
+        return "N/A"
+
     if num >= 1e12:
         return f"${num/1e12:.2f}T"
     if num >= 1e9:
@@ -56,17 +56,28 @@ def format_big_number(num):
         return f"${num/1e6:.2f}M"
     return f"${num:,.0f}"
 
-# ================= LOAD DATA (FROM FASTAPI) =================
+# ================= LOAD DATA =================
 @st.cache_data(ttl=60)
 def load_latest():
-    r = requests.get(f"{API_BASE_URL}/report/latest?limit=50", timeout=10)
+    r = requests.get(f"{API_BASE_URL}/report/latest?limit=50", timeout=15)
     r.raise_for_status()
-    return pd.DataFrame(r.json())
+    df = pd.DataFrame(r.json())
+
+    # enforce numeric columns
+    numeric_cols = [
+        "current_price", "market_cap", "total_volume",
+        "price_change_pct_24h", "high_24h", "low_24h"
+    ]
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    return df
 
 try:
     df = load_latest()
-except Exception as e:
-    st.error("Failed to load data from API")
+except Exception:
+    st.error("❌ Failed to load data from backend API")
     st.stop()
 
 if df.empty:
@@ -86,16 +97,16 @@ metric = st.sidebar.selectbox(
 
 show_raw = st.sidebar.checkbox("Show raw table")
 
-# ================= FILTER DATA =================
+# ================= FILTER =================
 df = df.sort_values("market_cap", ascending=False)
 
 if search:
     df = df[
-        df["name"].str.contains(search, case=False) |
-        df["symbol"].str.contains(search, case=False)
+        df["name"].str.contains(search, case=False, na=False) |
+        df["symbol"].str.contains(search, case=False, na=False)
     ]
 
-df_top = df.head(top_n)
+df_top = df.head(top_n).copy()
 
 # ================= HEADER =================
 st.markdown("## 📌 Market Overview")
@@ -136,7 +147,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ================= PIE CHART =================
+# ================= PIE =================
 st.markdown("## 🧩 Metric Share (Top Assets)")
 
 pie_fig = px.pie(
@@ -162,7 +173,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ================= MARKET CAP =================
+# ================= TREEMAP =================
 st.markdown("## 💰 Market Cap Distribution")
 
 cap_fig = px.treemap(
@@ -216,7 +227,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ================= RAW DATA =================
+# ================= RAW =================
 if show_raw:
     st.markdown("## 📄 Raw Data")
     st.dataframe(df_top)

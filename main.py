@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import requests
 from datetime import datetime
@@ -5,9 +6,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI()
+# ================= APP =================
+app = FastAPI(title="Data Drive API")
 
-# ---------------- CORS ----------------
+# ================= CORS =================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,11 +18,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_NAME = "market_data.db"
+# ================= DATABASE =================
+DATA_DIR = "/tmp/data"
+os.makedirs(DATA_DIR, exist_ok=True)
 
-# ---------------- DATABASE ----------------
+DB_NAME = os.path.join(DATA_DIR, "market_data.db")
+
+def get_conn():
+    return sqlite3.connect(DB_NAME, check_same_thread=False)
+
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_conn()
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS market_snapshots (
@@ -47,22 +55,33 @@ def init_db():
 
 init_db()
 
-# ---------------- MODELS ----------------
+# ================= MODELS =================
 class IngestRequest(BaseModel):
     url: str
 
-# ---------------- INGEST ENDPOINT ----------------
+# ================= INGEST =================
 @app.post("/ingest")
 def ingest_market_data(request: IngestRequest):
     try:
-        response = requests.get(request.url, timeout=10)
+        headers = {
+            "User-Agent": "DataDrive/1.0"
+        }
+
+        response = requests.get(
+            request.url,
+            headers=headers,
+            timeout=15
+        )
         response.raise_for_status()
         data = response.json()
 
         if not isinstance(data, list):
-            raise HTTPException(status_code=400, detail="Expected list of market data")
+            raise HTTPException(
+                status_code=400,
+                detail="Expected a list of market objects"
+            )
 
-        conn = sqlite3.connect(DB_NAME)
+        conn = get_conn()
         c = conn.cursor()
         ts = datetime.utcnow().isoformat()
 
@@ -105,19 +124,20 @@ def ingest_market_data(request: IngestRequest):
             "timestamp": ts
         }
 
-    except Exception as e:
+    except requests.RequestException as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-
+# ================= ROOT =================
 @app.get("/")
 def root():
     return {"status": "FastAPI backend running"}
 
-
-# ---------------- LATEST SNAPSHOT ----------------
+# ================= LATEST SNAPSHOT =================
 @app.get("/report/latest")
 def latest_snapshot(limit: int = 50):
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_conn()
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute("""
@@ -129,12 +149,12 @@ def latest_snapshot(limit: int = 50):
     """, (limit,)).fetchall()
 
     conn.close()
-    return rows
+    return [dict(row) for row in rows]
 
-# ---------------- TIME SERIES ----------------
+# ================= TIME SERIES =================
 @app.get("/report/coin/{coin_id}")
 def coin_timeseries(coin_id: str):
-    conn = sqlite3.connect(DB_NAME)
+    conn = get_conn()
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute("""
@@ -145,4 +165,4 @@ def coin_timeseries(coin_id: str):
     """, (coin_id,)).fetchall()
 
     conn.close()
-    return rows
+    return [dict(row) for row in rows]
