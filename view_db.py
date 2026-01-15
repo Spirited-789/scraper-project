@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("scraper_data.db")  
+conn = sqlite3.connect("market_data.db")  
 cursor = conn.cursor()
 
 # Show all tables
