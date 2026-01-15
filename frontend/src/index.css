@@ -6,7 +6,11 @@
 html,
 body,
 #root {
-  height: 100%;
+  overflow-x: hidden;
+  /* background-color: #09090b; */
+  min-height: 100vh;
+  overscroll-behavior: none;
+
   /* background-color: #000000; */
 }
 
@@ -156,5 +160,22 @@ svg * {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+/* Add to your index.css */
+@layer utilities {
+  @keyframes dash {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      /* This needs to be roughly double the perimeter of the shape to ensure a smooth continuous loop */
+      stroke-dashoffset: -2000;
+    }
+  }
+
+  .animate-dash {
+    /* Adjust '8s' to change speed */
+    animation: dash 8s linear infinite;
   }
 }

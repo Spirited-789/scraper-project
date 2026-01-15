@@ -31,7 +31,7 @@ function Home() {
 
   if (!token) return null;
 
-  // 🚪 LOGOUT (CORRECTED)
+  // 🚪 LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login", { replace: true });
@@ -76,10 +76,17 @@ function Home() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black px-6 lg:px-10 py-8 overflow-hidden">
-      {/* ===== STATIC GRID BACKGROUND (SAME THEME AS HERO) ===== */}
+    <div className="relative min-h-screen bg-zinc-950 px-6 lg:px-10 py-8 overflow-hidden">
+      {/* ===== BACKGROUND GRID (SAME AS HERO) ===== */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:32px_32px]" />
+        <div
+          className="
+          absolute inset-0
+          bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),
+              linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]
+          bg-[size:32px_32px]
+        "
+        />
       </div>
 
       {/* ===== CONTENT ===== */}
@@ -88,7 +95,12 @@ function Home() {
         <div className="flex justify-end mb-6">
           <Button
             variant="outline"
-            className="border-[#9bff00] text-[#9bff00] hover:bg-[#9bff00] hover:text-black"
+            className="
+              border-cyan-400/60
+              text-cyan-300
+              hover:bg-cyan-400
+              hover:text-black
+            "
             onClick={handleLogout}
           >
             Sign Out
@@ -103,14 +115,14 @@ function Home() {
                 Data Drive
               </h1>
 
-              <p className="font-mono text-[#a3a3a3] text-lg lg:text-xl mt-4">
+              <p className="font-mono text-zinc-400 text-lg lg:text-xl mt-4">
                 Paste an API → Ingest → Explore Interactive Analytics
               </p>
             </div>
 
             <div className="flex items-center gap-3 max-w-lg">
               <Input
-                className="text-[#a3a3a3] flex-1"
+                className="text-zinc-300 flex-1 bg-black/40 border-zinc-700"
                 type="text"
                 placeholder="Paste API URL..."
                 value={url}
@@ -119,11 +131,12 @@ function Home() {
 
               <Button
                 className="
-                  bg-[#9bff00]
-                  hover:bg-[#76c100]
-                  text-[#2b3703]
+                  bg-gradient-to-r from-cyan-400 to-emerald-400
+                  hover:from-cyan-300 hover:to-emerald-300
+                  text-black
                   px-5 py-2
                   h-10
+                  shadow-[0_0_32px_rgba(34,211,238,0.35)]
                 "
                 onClick={handleIngest}
                 disabled={loading}
