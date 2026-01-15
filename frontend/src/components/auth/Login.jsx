@@ -31,7 +31,7 @@ const Login = () => {
       localStorage.setItem("token", res.data.access_token);
 
       // ✅ Redirect to main page (API ingest page)
-      navigate("/");
+      navigate("/home");
     } catch (err) {
       console.log("Login Error:", err.response); // Helper for debugging
 
