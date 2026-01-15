@@ -44,11 +44,14 @@ export default function HeroSection() {
                 ))}
               </ul>
 
+              {/* ✅ FIXED: Buttons now link to /signup and /login */}
               <div className="hidden lg:flex gap-3">
-                <Button variant="outline" size="sm">
-                  Signup
+                <Button asChild variant="outline" size="sm">
+                  <a href="/signup">Signup</a>
                 </Button>
-                <Button size="sm">Login</Button>
+                <Button asChild size="sm">
+                  <a href="/login">Login</a>
+                </Button>
               </div>
             </div>
           </div>
