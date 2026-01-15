@@ -28,12 +28,14 @@ app = FastAPI(title="Data Drive API")
 # ================= CORS =================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+        allow_origins=[
+        "http://localhost:5173",
+        "https://scraper-project-nu.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # ================= DATABASE SETUP =================
 DATA_DIR = "/tmp/data"
 os.makedirs(DATA_DIR, exist_ok=True)
