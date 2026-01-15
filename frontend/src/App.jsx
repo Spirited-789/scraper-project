@@ -76,17 +76,14 @@ function Home() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 px-6 lg:px-10 py-8 overflow-hidden">
-      {/* ===== BACKGROUND GRID (SAME AS HERO) ===== */}
+    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 px-6 lg:px-10 py-8 overflow-hidden">
+      {/* ===== BACKGROUND (MATCHING LOGIN THEME) ===== */}
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div
-          className="
-          absolute inset-0
-          bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),
-              linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]
-          bg-[size:32px_32px]
-        "
-        />
+        {/* Rotating Glow */}
+        <div className="absolute left-1/2 top-1/2 h-[1200px] w-[1200px] -translate-x-1/2 -translate-y-1/2 animate-spin-slow rounded-full bg-[conic-gradient(from_0deg,transparent,rgba(34,211,238,0.18),transparent,rgba(52,211,153,0.14),transparent)] blur-3xl" />
+
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:32px_32px]" />
       </div>
 
       {/* ===== CONTENT ===== */}
@@ -96,10 +93,12 @@ function Home() {
           <Button
             variant="outline"
             className="
-              border-cyan-400/60
-              text-cyan-300
-              hover:bg-cyan-400
-              hover:text-black
+              bg-gradient-to-r from-cyan-400 to-emerald-400
+                  hover:from-cyan-300 hover:to-emerald-300
+                  text-black
+                  px-5 py-2
+                  h-10
+                  shadow-[0_0_32px_rgba(34,211,238,0.35)]
             "
             onClick={handleLogout}
           >
