@@ -25,16 +25,16 @@ function Home() {
   // 🔐 Protect route
   useEffect(() => {
     if (!token) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [token, navigate]);
 
   if (!token) return null;
 
-  // 🚪 LOGOUT
+  // 🚪 LOGOUT (CORRECTED)
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   const handleIngest = async () => {
@@ -76,59 +76,67 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black px-6 lg:px-10 py-8">
-      {/* TOP BAR */}
-      <div className="flex justify-end mb-6">
-        <Button
-          variant="outline"
-          className="border-[#9bff00] text-[#9bff00] hover:bg-[#9bff00] hover:text-black"
-          onClick={handleLogout}
-        >
-          Sign Out
-        </Button>
+    <div className="relative min-h-screen bg-black px-6 lg:px-10 py-8 overflow-hidden">
+      {/* ===== STATIC GRID BACKGROUND (SAME THEME AS HERO) ===== */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:32px_32px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-16">
-        {/* LEFT */}
-        <div className="flex flex-col gap-8">
-          <div>
-            <h1 className="font-mono text-white text-5xl lg:text-7xl font-bold">
-              Data Drive
-            </h1>
-
-            <p className="font-mono text-[#a3a3a3] text-lg lg:text-xl mt-4">
-              Paste an API → Ingest → Explore Interactive Analytics
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 max-w-lg">
-            <Input
-              className="text-[#a3a3a3] flex-1"
-              type="text"
-              placeholder="Paste API URL..."
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-            />
-
-            <Button
-              className="
-                bg-[#9bff00]
-                hover:bg-[#76c100]
-                text-[#2b3703]
-                px-5 py-2
-                h-10
-              "
-              onClick={handleIngest}
-              disabled={loading}
-            >
-              {loading ? "Ingesting..." : "Go!"}
-            </Button>
-          </div>
+      {/* ===== CONTENT ===== */}
+      <div className="relative z-10">
+        {/* TOP BAR */}
+        <div className="flex justify-end mb-6">
+          <Button
+            variant="outline"
+            className="border-[#9bff00] text-[#9bff00] hover:bg-[#9bff00] hover:text-black"
+            onClick={handleLogout}
+          >
+            Sign Out
+          </Button>
         </div>
 
-        {/* RIGHT */}
-        <div className="w-full h-[420px] lg:h-[520px]">
-          <RightAnalyticsDiv />
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 items-center gap-16">
+          {/* LEFT */}
+          <div className="flex flex-col gap-8">
+            <div>
+              <h1 className="font-mono text-white text-5xl lg:text-7xl font-bold">
+                Data Drive
+              </h1>
+
+              <p className="font-mono text-[#a3a3a3] text-lg lg:text-xl mt-4">
+                Paste an API → Ingest → Explore Interactive Analytics
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 max-w-lg">
+              <Input
+                className="text-[#a3a3a3] flex-1"
+                type="text"
+                placeholder="Paste API URL..."
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+
+              <Button
+                className="
+                  bg-[#9bff00]
+                  hover:bg-[#76c100]
+                  text-[#2b3703]
+                  px-5 py-2
+                  h-10
+                "
+                onClick={handleIngest}
+                disabled={loading}
+              >
+                {loading ? "Ingesting..." : "Go!"}
+              </Button>
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div className="w-full h-[420px] lg:h-[520px]">
+            <RightAnalyticsDiv />
+          </div>
         </div>
       </div>
     </div>
