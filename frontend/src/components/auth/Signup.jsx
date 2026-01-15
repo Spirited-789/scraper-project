@@ -1,11 +1,11 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { Spotlight } from "../ui/spotlight"; // ✅ Imported Spotlight
+import { Spotlight } from "../ui/spotlight";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -26,9 +26,34 @@ const Signup = () => {
         email,
         password,
       });
+      // Navigate to login on success
       navigate("/login");
     } catch (err) {
-      setError(err?.response?.data?.detail || "Signup failed");
+      console.log("Signup Error:", err.response); // Debugging helper
+
+      // --- FIX STARTS HERE ---
+      if (err.response && err.response.data) {
+        const errorData = err.response.data;
+
+        // CASE 1: Validation Error (Pydantic returns an Array)
+        // e.g. "Password is missing" or "Email invalid"
+        if (Array.isArray(errorData.detail)) {
+          setError(errorData.detail[0].msg);
+        }
+        // CASE 2: Logic Error (Backend returns a String)
+        // e.g. "Email already registered"
+        else if (typeof errorData.detail === "string") {
+          setError(errorData.detail);
+        }
+        // CASE 3: Fallback
+        else {
+          setError("Signup failed. Please check your details.");
+        }
+      } else {
+        // Network errors (Server down, etc.)
+        setError("Network error. Please try again later.");
+      }
+      // --- FIX ENDS HERE ---
     } finally {
       setLoading(false);
     }
@@ -37,8 +62,7 @@ const Signup = () => {
   return (
     // 1. MAIN CONTAINER: Aceternity Dark Background
     <div className="h-screen w-full flex md:items-center md:justify-center bg-[#020b10] antialiased bg-grid-white/[0.02] relative overflow-hidden">
-      {/* 2. THE SPOTLIGHT EFFECT (The "Window Light") */}
-      {/* We use two spotlights for a wider, more dramatic "God Ray" effect */}
+      {/* 2. THE SPOTLIGHT EFFECT */}
       <Spotlight
         className="-top-40 left-0 md:left-120 md:-top-20"
         fill="white"
@@ -59,12 +83,10 @@ const Signup = () => {
 
       {/* 4. CONTENT WRAPPER */}
       <div className="p-4 max-w-7xl mx-auto relative z-10 w-full flex flex-col items-center pt-20 md:pt-0">
-        {/* HERO TEXT (Brighter Gradients) */}
+        {/* HERO TEXT */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-2">
-            {/* <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-200 via-teal-400 to-cyan-400 drop-shadow-[0_0_10px_rgba(45,212,191,0.3)]">
-            
-            </span> */}
+            {/* Empty top line for spacing */}
           </h1>
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.3)]">
@@ -73,7 +95,7 @@ const Signup = () => {
           </h1>
         </div>
 
-        {/* LOGIN CARD */}
+        {/* SIGNUP CARD */}
         <div className="w-full max-w-md bg-[#0d1117]/60 backdrop-blur-md border border-[#30363d] rounded-2xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.3)] relative">
           {/* Subtle horizontal glow line behind/inside card header */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-teal-500/50 to-transparent"></div>

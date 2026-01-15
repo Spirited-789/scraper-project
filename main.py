@@ -1,23 +1,26 @@
 import os
 import sqlite3
 import requests
-from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from datetime import datetime, timedelta, timezone
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from passlib.context import CryptContext
-from jose import jwt
-from jose.exceptions import JWTError
-from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
 from dotenv import load_dotenv
+
 load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
-from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends
+
+# Fallback in case env vars are missing to prevent crash
+if not SECRET_KEY:
+    SECRET_KEY = "fallback_secret_key_dev_only"
+if not ALGORITHM:
+    ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
 
 # ================= APP =================
 app = FastAPI(title="Data Drive API")
@@ -31,88 +34,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Password hashing 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-def verify_password(password, hashed):
-    return pwd_context.verify(password, hashed)
-
-# JWT Token creation
-def create_access_token(data: dict, expires_minutes=60):
-    payload = data.copy()
-    payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-
-# SIGNUP ENDPOINT 
-@app.post("/auth/signup")
-def signup(email: str, password: str):
-    # 1. Check if user exists
-    existing_user = get_user_from_db(email)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    hashed = hash_password(password)
-    created_at = datetime.utcnow().isoformat()
-    
-    # 2. Actually Insert into DB
-    conn = get_conn_users()
-    c = conn.cursor()
-    try:
-        c.execute("INSERT INTO users (email, hashed_password, created_at) VALUES (?, ?, ?)", 
-                  (email, hashed, created_at))
-        conn.commit()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        conn.close()
-        
-    return {"status": "user created"}
-
-# LOGIN ENDPOINT
-@app.post("/auth/login")
-def login(email: str, password: str):
-    # 1. Get user (returns a Row object or None)
-    user = get_user_from_db(email)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    if not verify_password(password, user["hashed_password"]):
-        raise HTTPException(401, "Invalid credentials")
-
-    token = create_access_token({"sub": user["email"]})
-    return {"access_token": token, "token_type": "bearer"}
-
-def get_user_from_db(email: str):
-    conn = get_conn_users()
-    conn.row_factory = sqlite3.Row # Allows accessing columns by name
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
-    user = cursor.fetchone()
-    conn.close()
-    return user
-
-
-# Protecting routes
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload["sub"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-
-
-
-# ================= DATABASE =================
+# ================= DATABASE SETUP =================
 DATA_DIR = "/tmp/data"
 os.makedirs(DATA_DIR, exist_ok=True)
-
 DB_NAME = os.path.join(DATA_DIR, "market_data.db")
-
 DB_USERS = os.path.join(DATA_DIR, "users.db")
 
 def get_conn_users():
@@ -165,33 +90,101 @@ def init_db():
 
 init_db()
 
+# ================= AUTH UTILS =================
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(password, hashed):
+    return pwd_context.verify(password, hashed)
+
+def create_access_token(data: dict, expires_minutes=60):
+    payload = data.copy()
+    payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def get_user_from_db(email: str):
+    conn = get_conn_users()
+    conn.row_factory = sqlite3.Row 
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["sub"]
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
 # ================= MODELS =================
 class IngestRequest(BaseModel):
     url: str
 
-# ================= INGEST =================
-@app.post("/ingest")
-def ingest_market_data(
-    request: IngestRequest, 
-    user=Depends(get_current_user)):
-    try:
-        headers = {
-            "User-Agent": "DataDrive/1.0"
-        }
+# NEW: Models for Login/Signup to fix the 422 Error
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
-        response = requests.get(
-            request.url,
-            headers=headers,
-            timeout=15
-        )
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+
+# ================= AUTH ENDPOINTS =================
+@app.post("/auth/signup")
+def signup(user_data: SignupRequest):
+    # 1. Check if user exists
+    existing_user = get_user_from_db(user_data.email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed = hash_password(user_data.password)
+    created_at = datetime.utcnow().isoformat()
+    
+    # 2. Insert into DB
+    conn = get_conn_users()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (email, hashed_password, created_at) VALUES (?, ?, ?)", 
+                  (user_data.email, hashed, created_at))
+        conn.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+        
+    return {"status": "user created"}
+
+@app.post("/auth/login")
+def login(user_data: LoginRequest):
+    # 1. Get user
+    user = get_user_from_db(user_data.email)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    # 2. Verify Password
+    if not verify_password(user_data.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token({"sub": user["email"]})
+    return {"access_token": token, "token_type": "bearer"}
+
+
+# ================= DATA ENDPOINTS =================
+@app.post("/ingest")
+def ingest_market_data(request: IngestRequest, user=Depends(get_current_user)):
+    try:
+        headers = { "User-Agent": "DataDrive/1.0" }
+        response = requests.get(request.url, headers=headers, timeout=15)
         response.raise_for_status()
         data = response.json()
 
         if not isinstance(data, list):
-            raise HTTPException(
-                status_code=400,
-                detail="Expected a list of market objects"
-            )
+            raise HTTPException(status_code=400, detail="Expected a list of market objects")
 
         conn = get_conn()
         c = conn.cursor()
@@ -210,20 +203,12 @@ def ingest_market_data(
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                coin.get("id"),
-                coin.get("symbol"),
-                coin.get("name"),
-                coin.get("current_price"),
-                coin.get("market_cap"),
-                coin.get("total_volume"),
-                coin.get("price_change_24h"),
-                coin.get("price_change_percentage_24h"),
-                coin.get("high_24h"),
-                coin.get("low_24h"),
-                coin.get("circulating_supply"),
-                coin.get("max_supply"),
-                coin.get("ath"),
-                coin.get("ath_change_percentage"),
+                coin.get("id"), coin.get("symbol"), coin.get("name"),
+                coin.get("current_price"), coin.get("market_cap"), coin.get("total_volume"),
+                coin.get("price_change_24h"), coin.get("price_change_percentage_24h"),
+                coin.get("high_24h"), coin.get("low_24h"),
+                coin.get("circulating_supply"), coin.get("max_supply"),
+                coin.get("ath"), coin.get("ath_change_percentage"),
                 ts
             ))
 
@@ -241,40 +226,32 @@ def ingest_market_data(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ================= ROOT =================
 @app.get("/")
 def root():
     return {"status": "FastAPI backend running"}
 
-# ================= LATEST SNAPSHOT =================
 @app.get("/report/latest")
 def latest_snapshot(limit: int = 50):
     conn = get_conn()
     conn.row_factory = sqlite3.Row
-
     rows = conn.execute("""
-        SELECT *
-        FROM market_snapshots
+        SELECT * FROM market_snapshots
         WHERE timestamp = (SELECT MAX(timestamp) FROM market_snapshots)
         ORDER BY market_cap DESC
         LIMIT ?
     """, (limit,)).fetchall()
-
     conn.close()
     return [dict(row) for row in rows]
 
-# ================= TIME SERIES =================
 @app.get("/report/coin/{coin_id}")
 def coin_timeseries(coin_id: str):
     conn = get_conn()
     conn.row_factory = sqlite3.Row
-
     rows = conn.execute("""
         SELECT timestamp, current_price, market_cap, total_volume
         FROM market_snapshots
         WHERE coin_id = ?
         ORDER BY timestamp
     """, (coin_id,)).fetchall()
-
     conn.close()
     return [dict(row) for row in rows]

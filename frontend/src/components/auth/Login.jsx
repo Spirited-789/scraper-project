@@ -5,7 +5,7 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { Spotlight } from "../ui/spotlight"; // ✅ Imported Spotlight
+import { Spotlight } from "../ui/spotlight";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -33,7 +33,29 @@ const Login = () => {
       // ✅ Redirect to main page (API ingest page)
       navigate("/");
     } catch (err) {
-      setError(err?.response?.data?.detail || "Invalid email or password");
+      console.log("Login Error:", err.response); // Helper for debugging
+
+      // --- ERROR HANDLING FIX ---
+      if (err.response && err.response.data) {
+        const errorData = err.response.data;
+
+        // CASE 1: Validation Error (Pydantic returns an Array of objects)
+        if (Array.isArray(errorData.detail)) {
+          // Grab the message from the first error in the list
+          setError(errorData.detail[0].msg);
+        }
+        // CASE 2: Logic Error (Incorrect Password returns a String)
+        else if (typeof errorData.detail === "string") {
+          setError(errorData.detail);
+        }
+        // CASE 3: Fallback for unexpected formats
+        else {
+          setError("Login failed. Please check your credentials.");
+        }
+      } else {
+        // Network errors (Server down, etc.)
+        setError("Network error. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
