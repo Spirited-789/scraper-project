@@ -1,14 +1,15 @@
+fastapi
+uvicorn
 python-multipart
 requests
 beautifulsoup4
 plotly
-fastapi
-uvicorn
-jinja2
 streamlit
 pandas
 numpy
-passlib[bcrypt]
-python-jose
-dotenv
 
+# 🔐 AUTH (PINNED)
+passlib==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]
+python-dotenv
