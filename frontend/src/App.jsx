@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+
 import "./App.css";
 
 import { Button } from "./components/ui/button";
@@ -8,11 +9,26 @@ import { Input } from "./components/ui/input";
 import RightAnalyticsDiv from "./mymade_components/RightAnalyticsDiv";
 import PageSkeleton from "./mymade_components/PageSkeleton";
 
-/* ================= HOME ================= */
+import Login from "./components/auth/Login";
+import Signup from "./components/auth/Signup";
+
+/* ================= HOME (PROTECTED) ================= */
 function Home() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  // ✅ Redirect AFTER render
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    }
+  }, [token, navigate]);
+
+  if (!token) return null;
 
   const handleIngest = async () => {
     if (!url) {
@@ -24,16 +40,21 @@ function Home() {
     setLoading(true);
 
     try {
-      // 🔹 Backend ingestion (Render)
-      await axios.post("https://data-drive-d7kc.onrender.com/ingest", { url });
+      await axios.post(
+        "https://data-drive-d7kc.onrender.com/ingest",
+        { url },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ REQUIRED
+          },
+        }
+      );
 
-      // 🔹 Open deployed Streamlit dashboard
       window.open(
         "https://scraper-project-data07drive.streamlit.app/",
         "_blank"
       );
     } catch (error) {
-      console.error(error);
       alert(
         error?.response?.data?.detail || "Backend error while ingesting data"
       );
@@ -43,7 +64,6 @@ function Home() {
     }
   };
 
-  // 🔹 Full-page skeleton while ingesting
   if (pageLoading) {
     return <PageSkeleton />;
   }
@@ -64,7 +84,6 @@ function Home() {
               </p>
             </div>
 
-            {/* INPUT + BUTTON */}
             <div className="flex items-center gap-3 max-w-lg">
               <Input
                 className="text-[#a3a3a3] flex-1"
@@ -90,7 +109,7 @@ function Home() {
             </div>
           </div>
 
-          {/* RIGHT (visual only) */}
+          {/* RIGHT */}
           <div className="w-full h-[420px] lg:h-[520px]">
             <RightAnalyticsDiv />
           </div>
@@ -100,11 +119,13 @@ function Home() {
   );
 }
 
-/* ================= APP ================= */
+/* ================= APP ROUTER ================= */
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<Home />} />
       </Routes>
     </BrowserRouter>

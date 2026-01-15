@@ -5,6 +5,19 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from passlib.context import CryptContext
+from jose import jwt
+from jose.exceptions import JWTError
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
+load_dotenv()
+SECRET_KEY = os.getenv('SECRET_KEY')
+ALGORITHM = os.getenv('ALGORITHM')
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
 
 # ================= APP =================
 app = FastAPI(title="Data Drive API")
@@ -18,11 +31,108 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Password hashing 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(password, hashed):
+    return pwd_context.verify(password, hashed)
+
+# JWT Token creation
+def create_access_token(data: dict, expires_minutes=60):
+    payload = data.copy()
+    payload["exp"] = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+# SIGNUP ENDPOINT 
+@app.post("/auth/signup")
+def signup(email: str, password: str):
+    # 1. Check if user exists
+    existing_user = get_user_from_db(email)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed = hash_password(password)
+    created_at = datetime.utcnow().isoformat()
+    
+    # 2. Actually Insert into DB
+    conn = get_conn_users()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (email, hashed_password, created_at) VALUES (?, ?, ?)", 
+                  (email, hashed, created_at))
+        conn.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+        
+    return {"status": "user created"}
+
+# LOGIN ENDPOINT
+@app.post("/auth/login")
+def login(email: str, password: str):
+    # 1. Get user (returns a Row object or None)
+    user = get_user_from_db(email)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not verify_password(password, user["hashed_password"]):
+        raise HTTPException(401, "Invalid credentials")
+
+    token = create_access_token({"sub": user["email"]})
+    return {"access_token": token, "token_type": "bearer"}
+
+def get_user_from_db(email: str):
+    conn = get_conn_users()
+    conn.row_factory = sqlite3.Row # Allows accessing columns by name
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+
+# Protecting routes
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload["sub"]
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+
+
 # ================= DATABASE =================
 DATA_DIR = "/tmp/data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
 DB_NAME = os.path.join(DATA_DIR, "market_data.db")
+
+DB_USERS = os.path.join(DATA_DIR, "users.db")
+
+def get_conn_users():
+    return sqlite3.connect(DB_USERS, check_same_thread=False)
+
+def init_db_users():
+    conn = get_conn_users()
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            email TEXT UNIQUE,
+            hashed_password TEXT,
+            created_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db_users()
 
 def get_conn():
     return sqlite3.connect(DB_NAME, check_same_thread=False)
@@ -61,7 +171,9 @@ class IngestRequest(BaseModel):
 
 # ================= INGEST =================
 @app.post("/ingest")
-def ingest_market_data(request: IngestRequest):
+def ingest_market_data(
+    request: IngestRequest, 
+    user=Depends(get_current_user)):
     try:
         headers = {
             "User-Agent": "DataDrive/1.0"

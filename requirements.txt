@@ -8,4 +8,7 @@ jinja2
 streamlit
 pandas
 numpy
+passlib[bcrypt]
+python-jose
+dotenv
 
