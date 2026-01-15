@@ -21,7 +21,7 @@ export default function HeroSection() {
       <header>
         <nav
           data-state={menuState ? "active" : undefined}
-          className="fixed z-30 w-full border-b border-dashed border-zinc-800 bg-[linear-gradient(to_right,rgba(255,255,255,0.035),transparent_1px),linear-gradient(to_bottom,rgba(48, 45, 45, 0.04)_1px,transparent_1px)] bg-[size:32px_32px] backdrop-blur md:relative"
+          className="fixed z-30 w-full border-b border-dashed border-zinc-800 bg-transparent"
         >
           <div className="mx-auto max-w-7xl px-6">
             <div className="flex items-center justify-between space-x-4 py-4">
