@@ -139,7 +139,7 @@ const Signup = () => {
                 Email
               </Label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
+                <Mail className="absolute left-3 top-8.5 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
                 <Input
                   type="email"
                   placeholder="abc@gmail.com"
@@ -157,7 +157,7 @@ const Signup = () => {
                 Password
               </Label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
+                <Lock className="absolute left-3 top-8 h-4 w-4 text-zinc-500 group-focus-within:text-teal-400 transition-colors" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -168,7 +168,7 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-zinc-500 hover:text-white transition-colors z-20"
+                  className="absolute right-8 top-8.5 text-zinc-500 hover:text-white transition-colors z-20"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
