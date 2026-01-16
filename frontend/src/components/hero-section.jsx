@@ -21,7 +21,6 @@ export default function HeroSection() {
       <header className="relative z-50">
         <nav
           data-state={menuState ? "active" : undefined}
-          // ✅ FIX 1: Reverted to bg-transparent
           className="fixed w-full border-b border-dashed border-zinc-800 bg-transparent"
         >
           <div className="mx-auto max-w-7xl px-6">
@@ -68,13 +67,13 @@ export default function HeroSection() {
           {menuState && (
             // ✅ FIX 2: Changed from w-full (full screen) to w-48 aligned to right
             <div className="lg:hidden absolute top-full right-4 w-48 bg-zinc-950 border border-zinc-800 p-4 shadow-2xl rounded-lg animate-in fade-in slide-in-from-top-2">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2 mr-5">
                 {/* Mobile Auth Buttons - Compact & Right Aligned */}
                 <Button
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  className="w-full justify-center text-zinc-400 hover:text-white hover:bg-zinc-800/50 border border-shadow-smooth"
                 >
                   <a href="/signup">Signup</a>
                 </Button>
