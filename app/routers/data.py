@@ -4,6 +4,7 @@ Data router: ingestion and reporting endpoints.
 from datetime import datetime
 import requests
 from fastapi import APIRouter, HTTPException, Depends
+from psycopg2.extras import RealDictCursor
 
 from app.database import get_conn
 from app.models.schemas import IngestRequest
@@ -21,9 +22,7 @@ def ingest_market_data(request: IngestRequest, user=Depends(get_current_user)):
     """
     try:
         headers = {"User-Agent": "DataDrive/1.0"}
-        # requests is like axios for js
         response = requests.get(request.url, headers=headers, timeout=15)
-        # raise_for_status() is like try catch for js
         response.raise_for_status()
         data = response.json()
 
@@ -45,7 +44,7 @@ def ingest_market_data(request: IngestRequest, user=Depends(get_current_user)):
                     ath, ath_change_pct,
                     timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 coin.get("id"), coin.get("symbol"), coin.get("name"),
                 coin.get("current_price"), coin.get("market_cap"), coin.get("total_volume"),
@@ -75,27 +74,29 @@ def ingest_market_data(request: IngestRequest, user=Depends(get_current_user)):
 def latest_snapshot(limit: int = 50):
     """Get the latest market snapshot, ordered by market cap."""
     conn = get_conn()
-    conn.row_factory = __import__('sqlite3').Row
-    rows = conn.execute("""
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
         SELECT * FROM market_snapshots
         WHERE timestamp = (SELECT MAX(timestamp) FROM market_snapshots)
         ORDER BY market_cap DESC
-        LIMIT ?
-    """, (limit,)).fetchall()
+        LIMIT %s
+    """, (limit,))
+    rows = cursor.fetchall()
     conn.close()
-    return [dict(row) for row in rows]
+    return rows
 
 
 @router.get("/report/coin/{coin_id}")
 def coin_timeseries(coin_id: str):
     """Get time series data for a specific coin."""
     conn = get_conn()
-    conn.row_factory = __import__('sqlite3').Row
-    rows = conn.execute("""
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
         SELECT timestamp, current_price, market_cap, total_volume
         FROM market_snapshots
-        WHERE coin_id = ?
+        WHERE coin_id = %s
         ORDER BY timestamp
-    """, (coin_id,)).fetchall()
+    """, (coin_id,))
+    rows = cursor.fetchall()
     conn.close()
-    return [dict(row) for row in rows]
+    return rows

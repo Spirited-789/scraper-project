@@ -1,15 +1,15 @@
 """
 Authentication utilities: password hashing, JWT, user lookup.
 """
-import sqlite3
 from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+from psycopg2.extras import RealDictCursor
 
 from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.database import get_conn_users
+from app.database import get_conn
 
 
 # =================== SECURITY SETUP ===================
@@ -39,10 +39,9 @@ def create_access_token(data: dict, expires_minutes: int = ACCESS_TOKEN_EXPIRE_M
 # =================== USER DATABASE ===================
 def get_user_from_db(email: str):
     """Lookup user by email from database."""
-    conn = get_conn_users()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    conn = get_conn()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
     conn.close()
     return user
@@ -59,5 +58,3 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
         return payload["sub"]
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-

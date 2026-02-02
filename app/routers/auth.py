@@ -4,7 +4,7 @@ Authentication router: login and signup endpoints.
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
-from app.database import get_conn_users
+from app.database import get_conn
 from app.models.schemas import LoginRequest, SignupRequest
 from app.services.auth import (
     hash_password,
@@ -29,11 +29,11 @@ def signup(user_data: SignupRequest):
     hashed = hash_password(user_data.password)
     created_at = datetime.utcnow().isoformat()
     
-    conn = get_conn_users()
+    conn = get_conn()
     c = conn.cursor()
     try:
         c.execute(
-            "INSERT INTO users (email, hashed_password, created_at) VALUES (?, ?, ?)",
+            "INSERT INTO users (email, hashed_password, created_at) VALUES (%s, %s, %s)",
             (user_data.email, hashed, created_at)
         )
         conn.commit()

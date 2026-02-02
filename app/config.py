@@ -13,11 +13,15 @@ ALGORITHM = os.getenv('ALGORITHM', 'HS256')
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # =================== DATABASE ===================
-DATA_DIR = "/tmp/data"
-os.makedirs(DATA_DIR, exist_ok=True)
+# PostgreSQL connection string from Supabase
+# Format: postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-DB_NAME = os.path.join(DATA_DIR, "market_data.db")
-DB_USERS = os.path.join(DATA_DIR, "users.db")
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL environment variable is required. "
+        "Get it from Supabase: Settings → Database → Connection string (URI)"
+    )
 
 # =================== CORS ===================
 ALLOWED_ORIGINS = [
