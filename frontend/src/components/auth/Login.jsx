@@ -5,9 +5,18 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useMsal } from "@azure/msal-react";
+import { loginRequest } from "../../authConfig";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { instance } = useMsal();
+
+  const handleMicrosoftLogin = () => {
+    instance.loginRedirect(loginRequest).catch((error) => {
+      console.error("Microsoft login failed:", error);
+    });
+  };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -212,6 +221,25 @@ const Login = () => {
               )}
             </Button>
 
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-800" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-zinc-900 px-2 text-zinc-500">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleMicrosoftLogin}
+              variant="outline"
+              className="w-full h-11 bg-zinc-800 text-white border-zinc-700 transition-all relative z-10 flex items-center justify-center gap-2"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg"><path fill="#f35325" d="M1 1h10v10H1z" /><path fill="#81bc06" d="M12 1h10v10H12z" /><path fill="#05a6f0" d="M1 12h10v10H1z" /><path fill="#ffba08" d="M12 12h10v10H12z" /></svg>
+              Sign in with Microsoft
+            </Button>
+
             <div className="text-center text-sm text-zinc-500 relative z-10">
               Don't have an account?{" "}
               <span
@@ -224,7 +252,7 @@ const Login = () => {
           </form>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

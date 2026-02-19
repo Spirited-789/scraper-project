@@ -10,7 +10,17 @@ from app.routers import auth, data
 
 
 # =================== APP INITIALIZATION ===================
-app = FastAPI(title="Data Drive API")
+from contextlib import asynccontextmanager
+from app.services.entra_auth import azure_scheme
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load OpenID Connect configuration on startup
+    await azure_scheme.openid_config.load_config()
+    yield
+    # Clean up if needed
+
+app = FastAPI(lifespan=lifespan, title="Data Drive API")
 
 # =================== CORS MIDDLEWARE ===================
 app.add_middleware(

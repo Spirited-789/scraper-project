@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
 
 import "./App.css";
 
@@ -31,10 +32,14 @@ function Home() {
 
   if (!token) return null;
 
+  const { instance } = useMsal();
+
   // 🚪 LOGOUT
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login", { replace: true });
+    instance.logoutRedirect({
+      postLogoutRedirectUri: "/login",
+    });
   };
 
   const handleIngest = async () => {

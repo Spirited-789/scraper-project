@@ -16,3 +16,5 @@ python-dotenv
 
 # 🗃️ DATABASE
 psycopg2-binary
+# Entra ID
+fastapi-azure-auth

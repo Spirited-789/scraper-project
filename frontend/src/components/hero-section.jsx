@@ -65,7 +65,7 @@ export default function HeroSection() {
 
           {/* ================= MOBILE MENU (Fixed) ================= */}
           {menuState && (
-            // ✅ FIX 2: Changed from w-full (full screen) to w-48 aligned to right
+            // FIX 2: Changed from w-full (full screen) to w-48 aligned to right
             <div className="lg:hidden absolute top-full right-4 w-48 bg-zinc-950 border border-zinc-800 p-4 shadow-2xl rounded-lg animate-in fade-in slide-in-from-top-2">
               <div className="flex flex-col gap-2 mr-5">
                 {/* Mobile Auth Buttons - Compact & Right Aligned */}
