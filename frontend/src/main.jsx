@@ -17,7 +17,7 @@ msalInstance.initialize().then(() => {
   msalInstance.handleRedirectPromise().then((response) => {
     if (response) {
       // User just logged in via Microsoft redirect
-      localStorage.setItem("token", response.accessToken);
+      localStorage.setItem("token", response.idToken);
       window.location.href = "/home";
     }
   }).catch((error) => {

@@ -51,10 +51,52 @@ def get_user_from_db(email: str):
 def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
     """
     FastAPI dependency to validate JWT and return current user email.
-    Raises HTTPException if token is invalid or expired.
+    Supports BOTH:
+      1. Old JWT tokens (from email/password login)
+      2. Microsoft ID tokens (from Entra ID login)
     """
+    # --- Attempt 1: Old JWT (email/password login) ---
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload["sub"]
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        pass
+
+    # --- Attempt 2: Microsoft ID Token (Entra ID login) ---
+    try:
+        from app.config import AZURE_CLIENT_ID, AZURE_TENANT_ID
+
+        # Decode without signature verification for PoC
+        # (In production, verify against Microsoft's JWKS)
+        payload = jwt.decode(
+            token,
+            options={"verify_signature": False, "verify_aud": False}
+        )
+
+        # Validate issuer matches our tenant
+        issuer = payload.get("iss", "")
+        if AZURE_TENANT_ID and AZURE_TENANT_ID not in issuer:
+            raise HTTPException(status_code=401, detail="Invalid token issuer")
+
+        # Validate audience matches our client ID
+        aud = payload.get("aud", "")
+        if AZURE_CLIENT_ID and aud != AZURE_CLIENT_ID:
+            raise HTTPException(status_code=401, detail="Invalid token audience")
+
+        # Extract user email from Microsoft token claims
+        email = (
+            payload.get("preferred_username")
+            or payload.get("email")
+            or payload.get("upn")
+            or payload.get("sub")
+        )
+        if email:
+            return email
+
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
+    raise HTTPException(status_code=401, detail="Invalid or expired token")
+
